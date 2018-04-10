@@ -47,7 +47,7 @@ import org.robolectric.res.android.ResourceTypes.Res_value;
 import org.robolectric.util.ReflectionHelpers;
 import org.robolectric.util.ReflectionHelpers.ClassParameter;
 
-// native method impls transliterated from https://android.googlesource.com/platform/frameworks/base/+/android-7.1.1_r13/core/jni/android_util_AssetManager.cpp
+// native method impls transliterated from https://android.googlesource.com/platform/frameworks/base/+/android-8.0.0_r36/core/jni/android_util_AssetManager.cpp
 public class ShadowArscAssetManager extends ShadowAssetManager {
 
   private static final NativeObjRegistry<ResTableTheme> nativeThemeRegistry = new NativeObjRegistry<>();
