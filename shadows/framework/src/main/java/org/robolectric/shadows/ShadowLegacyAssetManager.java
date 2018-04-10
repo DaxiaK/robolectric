@@ -1,20 +1,8 @@
 package org.robolectric.shadows;
 
-import static android.os.Build.VERSION_CODES.KITKAT_WATCH;
-import static android.os.Build.VERSION_CODES.LOLLIPOP;
-import static android.os.Build.VERSION_CODES.N_MR1;
-import static org.robolectric.RuntimeEnvironment.castNativePtr;
-import static org.robolectric.shadow.api.Shadow.directlyOn;
-import static org.robolectric.shadow.api.Shadow.invokeConstructor;
-import static org.robolectric.util.ReflectionHelpers.ClassParameter.from;
-
 import android.annotation.SuppressLint;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
+import android.content.res.*;
 import android.content.res.AssetManager.AssetInputStream;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.content.res.XmlResourceParser;
 import android.os.Build;
 import android.os.Build.VERSION_CODES;
 import android.os.ParcelFileDescriptor;
@@ -22,24 +10,11 @@ import android.util.AttributeSet;
 import android.util.SparseArray;
 import android.util.TypedValue;
 import com.google.common.collect.Ordering;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -48,27 +23,18 @@ import org.robolectric.RuntimeEnvironment;
 import org.robolectric.android.XmlResourceParserImpl;
 import org.robolectric.annotation.HiddenApi;
 import org.robolectric.annotation.Implementation;
-import org.robolectric.res.AttrData;
-import org.robolectric.res.AttributeResource;
-import org.robolectric.res.EmptyStyle;
-import org.robolectric.res.FileTypedResource;
-import org.robolectric.res.Fs;
-import org.robolectric.res.FsFile;
-import org.robolectric.res.ResName;
-import org.robolectric.res.ResType;
-import org.robolectric.res.ResourceIds;
-import org.robolectric.res.ResourceTable;
-import org.robolectric.res.Style;
-import org.robolectric.res.StyleData;
-import org.robolectric.res.StyleResolver;
-import org.robolectric.res.ThemeStyleSet;
-import org.robolectric.res.TypedResource;
+import org.robolectric.res.*;
 import org.robolectric.res.android.ResTable_config;
 import org.robolectric.res.builder.XmlBlock;
 import org.robolectric.shadow.api.Shadow;
 import org.robolectric.shadows.ShadowResources.ShadowTheme;
 import org.robolectric.util.Logger;
 import org.robolectric.util.ReflectionHelpers;
+
+import static android.os.Build.VERSION_CODES.*;
+import static org.robolectric.RuntimeEnvironment.castNativePtr;
+import static org.robolectric.res.android.AttributeResolution.*;
+import static org.robolectric.util.ReflectionHelpers.ClassParameter.from;
 
 @SuppressLint("NewApi")
 public class ShadowLegacyAssetManager extends ShadowAssetManager {
@@ -687,11 +653,11 @@ public class ShadowLegacyAssetManager extends ShadowAssetManager {
 
   private TypedArray getTypedArray(Resources resources, List<TypedResource> typedResources, int resId) {
     final CharSequence[] stringData = new CharSequence[typedResources.size()];
-    final int totalLen = typedResources.size() * ShadowAssetManager.STYLE_NUM_ENTRIES;
+    final int totalLen = typedResources.size() * STYLE_NUM_ENTRIES;
     final int[] data = new int[totalLen];
 
     for (int i = 0; i < typedResources.size(); i++) {
-      final int offset = i * ShadowAssetManager.STYLE_NUM_ENTRIES;
+      final int offset = i * STYLE_NUM_ENTRIES;
       TypedResource typedResource = typedResources.get(i);
 
       // Classify the item.
@@ -734,12 +700,12 @@ public class ShadowLegacyAssetManager extends ShadowAssetManager {
         getConverter(typedResource).fillTypedValue(typedResource.getData(), typedValue);
       }
 
-      data[offset + ShadowAssetManager.STYLE_TYPE] = type;
-      data[offset + ShadowAssetManager.STYLE_RESOURCE_ID] = typedValue.resourceId;
-      data[offset + ShadowAssetManager.STYLE_DATA] = typedValue.data;
-      data[offset + ShadowAssetManager.STYLE_ASSET_COOKIE] = typedValue.assetCookie;
-      data[offset + ShadowAssetManager.STYLE_CHANGING_CONFIGURATIONS] = typedValue.changingConfigurations;
-      data[offset + ShadowAssetManager.STYLE_DENSITY] = typedValue.density;
+      data[offset + STYLE_TYPE] = type;
+      data[offset + STYLE_RESOURCE_ID] = typedValue.resourceId;
+      data[offset + STYLE_DATA] = typedValue.data;
+      data[offset + STYLE_ASSET_COOKIE] = typedValue.assetCookie;
+      data[offset + STYLE_CHANGING_CONFIGURATIONS] = typedValue.changingConfigurations;
+      data[offset + STYLE_DENSITY] = typedValue.density;
       stringData[i] = typedResource == null ? null : typedResource.asString();
     }
 
@@ -836,10 +802,9 @@ public class ShadowLegacyAssetManager extends ShadowAssetManager {
   }
 
   @HiddenApi @Implementation(maxSdk = N_MR1)
-  protected static boolean applyStyle(long themeToken, int defStyleAttr, int defStyleRes,
+  protected static void applyStyle(long themeToken, int defStyleAttr, int defStyleRes,
       long xmlParserToken, int[] attrs, int[] outValues, int[] outIndices) {
     // no-op
-    return false;
   }
 
   @HiddenApi @Implementation
@@ -1041,7 +1006,7 @@ public class ShadowLegacyAssetManager extends ShadowAssetManager {
 
   TypedArray attrsToTypedArray(Resources resources, AttributeSet set, int[] attrs, int defStyleAttr, long nativeTheme, int defStyleRes) {
     CharSequence[] stringData = new CharSequence[attrs.length];
-    int[] data = new int[attrs.length * ShadowAssetManager.STYLE_NUM_ENTRIES];
+    int[] data = new int[attrs.length * STYLE_NUM_ENTRIES];
     int[] indices = new int[attrs.length + 1];
     int nextIndex = 0;
 
@@ -1050,17 +1015,17 @@ public class ShadowLegacyAssetManager extends ShadowAssetManager {
         : getNativeTheme(nativeTheme).themeStyleSet;
 
     for (int i = 0; i < attrs.length; i++) {
-      int offset = i * ShadowAssetManager.STYLE_NUM_ENTRIES;
+      int offset = i * STYLE_NUM_ENTRIES;
 
       TypedValue typedValue = buildTypedValue(set, attrs[i], defStyleAttr, themeStyleSet, defStyleRes);
       if (typedValue != null) {
         //noinspection PointlessArithmeticExpression
-        data[offset + ShadowAssetManager.STYLE_TYPE] = typedValue.type;
-        data[offset + ShadowAssetManager.STYLE_DATA] = typedValue.type == TypedValue.TYPE_STRING ? i : typedValue.data;
-        data[offset + ShadowAssetManager.STYLE_ASSET_COOKIE] = typedValue.assetCookie;
-        data[offset + ShadowAssetManager.STYLE_RESOURCE_ID] = typedValue.resourceId;
-        data[offset + ShadowAssetManager.STYLE_CHANGING_CONFIGURATIONS] = typedValue.changingConfigurations;
-        data[offset + ShadowAssetManager.STYLE_DENSITY] = typedValue.density;
+        data[offset + STYLE_TYPE] = typedValue.type;
+        data[offset + STYLE_DATA] = typedValue.type == TypedValue.TYPE_STRING ? i : typedValue.data;
+        data[offset + STYLE_ASSET_COOKIE] = typedValue.assetCookie;
+        data[offset + STYLE_RESOURCE_ID] = typedValue.resourceId;
+        data[offset + STYLE_CHANGING_CONFIGURATIONS] = typedValue.changingConfigurations;
+        data[offset + STYLE_DENSITY] = typedValue.density;
         stringData[i] = typedValue.string;
 
         indices[nextIndex + 1] = i;
